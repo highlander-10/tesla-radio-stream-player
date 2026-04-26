@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phill's Wee Radio Streamer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #111;
+            color: #eee;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem 0;
+        }
+        .container {
+            width: 100%;
+            max-width: 420px;
+            padding: 1rem;
+            border: 1px solid #333;
+            border-radius: 12px;
+        }
+        h1 { margin-top: 0; color: #fff; text-align: center; }
+        button.station-button {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #fff;
+            background-color: #333;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+        button.station-button:hover { background-color: #444; }
+        #resume-button {
+            background-color: #34c759; /* Green */
+        }
+        #resume-button:hover {
+            background-color: #2a9e48;
+        }
+        .station-icon { width: 2.5rem; height: 2.5rem; margin-right: 1rem; border-radius: 6px; object-fit: contain; }
+        audio { width: 100%; margin-top: 1rem; }
+        video#hls-player { width: 100%; margin-top: 1rem; display: none; }
+        #status { margin-top: 1rem; color: #999; min-height: 1.5em; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Phill's Wee Radio Streamer</h1>
+        
+        <div id="station-list"></div>
+
+        <audio id="audio-player" controls></audio>
+        
+        <div id="status">Select a station to play.</div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script>
+        const WORKER_URL = 'https://tesla-radio-proxy.phill-5ff.workers.dev/';
+
+        const audioPlayer = document.getElementById('audio-player');
+        const stationListEl = document.getElementById('station-list');
+        const statusEl = document.getElementById('status');
+        let hlsInstance = null;
+
+        const defaultStations = [
+            // IMPORTANT: Clyde 1 is kept exactly as-is with its special token handling
+            { name: "Clyde 1", url: "http://www.radiofeeds.net/playlists/bauer.pls?station=clyde1-aac", icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSHe09jI2ikohDCgWJy-5BZBpdWcGfh_wdAxw&s"},
+            { name: "BBC World Service News", url: "http://lsn.lv/bbcradio.m3u8?station=bbc_world_service_news_internet&bitrate=320000", icon: "https://upload.wikimedia.org/wikipedia/en/thumb/e/eb/BBC_News.svg/1280px-BBC_News.svg.png"},
+            { name: "France 24", url: "http://static.france24.com/live/F24_FR_LO_HLS/live_ios.m3u8", icon: "https://upload.wikimedia.org/wikipedia/en/thumb/d/df/France_24_logo.svg/1280px-France_24_logo.svg.png"},
+            { name: "DW News", url: "http://dwamdstream110.akamaized.net/hls/live/2017971/dwstream110/stream04/streamPlaylist.m3u8", icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Deutsche_Welle_Logo.svg/1280px-Deutsche_Welle_Logo.svg.png"}
+        ];
+
+        async function playStream(station) {
+            statusEl.textContent = `Loading ${station.name}...`;
+            audioPlayer.pause();
+
+            if (hlsInstance) {
+                hlsInstance.destroy();
+                hlsInstance = null;
+            }
+
+            let finalStreamUrl = station.url;
+
+            if (station.url.toLowerCase().startsWith('http:')) {
+                try {
+                    const response = await fetch(`${WORKER_URL}?parse=${encodeURIComponent(station.url)}`);
+                    const data = await response.json();
+                    if (!response.ok || !data.freshStreamUrl) {
+                        throw new Error(data.error || 'Worker returned an invalid response.');
+                    }
+                    finalStreamUrl = data.freshStreamUrl;
+                } catch (error) {
+                    statusEl.textContent = `Error: ${error.message}`;
+                    return;
+                }
+            }
+
+            statusEl.textContent = `Playing ${station.name}...`;
+
+            // Check if it's an HLS stream (M3U8) that needs HLS.js
+            if (finalStreamUrl.includes('.m3u8') && window.Hls && window.Hls.isSupported()) {
+                hlsInstance = new window.Hls();
+                hlsInstance.loadSource(finalStreamUrl);
+                hlsInstance.attachMedia(audioPlayer);
+                hlsInstance.on(window.Hls.Events.MANIFEST_PARSED, () => {
+                    audioPlayer.play();
+                });
+                hlsInstance.on(window.Hls.Events.ERROR, (event, data) => {
+                    statusEl.textContent = `Playback error: ${data.reason}`;
+                });
+            } else {
+                audioPlayer.src = finalStreamUrl;
+                audioPlayer.play();
+            }
+
+            localStorage.setItem('lastPlayedStation', JSON.stringify(station));
+        }
+
+        function initializePlayer() {
+            stationListEl.innerHTML = ''; 
+            let lastPlayedStation = null;
+
+            try {
+                lastPlayedStation = JSON.parse(localStorage.getItem('lastPlayedStation'));
+            } catch (e) {
+                console.error("Could not parse lastPlayedStation from localStorage", e);
+                localStorage.removeItem('lastPlayedStation');
+            }
+
+            if (lastPlayedStation && lastPlayedStation.name && lastPlayedStation.url) {
+                const resumeButton = document.createElement('button');
+                resumeButton.className = 'station-button';
+                resumeButton.id = 'resume-button';
+                
+                const icon = document.createElement('img');
+                icon.className = 'station-icon';
+                if (lastPlayedStation.icon) { icon.src = lastPlayedStation.icon; }
+                resumeButton.appendChild(icon);
+
+                const name = document.createElement('span');
+                name.textContent = `Resume: ${lastPlayedStation.name}`;
+                resumeButton.appendChild(name);
+
+                resumeButton.addEventListener('click', () => playStream(lastPlayedStation));
+                stationListEl.appendChild(resumeButton);
+            }
+
+            defaultStations.forEach(station => {
+                const button = document.createElement('button');
+                button.className = 'station-button';
+                
+                const icon = document.createElement('img');
+                icon.className = 'station-icon';
+                icon.src = station.icon;
+                button.appendChild(icon);
+
+                const name = document.createElement('span');
+                name.textContent = station.name;
+                button.appendChild(name);
+
+                button.addEventListener('click', () => playStream(station));
+                stationListEl.appendChild(button);
+            });
+        }
+
+        initializePlayer();
+    </script>
+</body>
+</html>
