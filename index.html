@@ -92,7 +92,10 @@
 
             let finalStreamUrl = station.url;
 
-            if (station.url.toLowerCase().startsWith('http:')) {
+            // M3U8 streams bypass the worker and use HLS.js directly
+            const isM3u8 = station.url.toLowerCase().includes('.m3u8');
+
+            if (station.url.toLowerCase().startsWith('http:') && !isM3u8) {
                 try {
                     const response = await fetch(`${WORKER_URL}?parse=${encodeURIComponent(station.url)}`);
                     const data = await response.json();
@@ -109,7 +112,7 @@
             statusEl.textContent = `Playing ${station.name}...`;
 
             // Check if it's an HLS stream (M3U8) that needs HLS.js
-            if (finalStreamUrl.includes('.m3u8') && window.Hls && window.Hls.isSupported()) {
+            if (isM3u8 && window.Hls && window.Hls.isSupported()) {
                 hlsInstance = new window.Hls();
                 hlsInstance.loadSource(finalStreamUrl);
                 hlsInstance.attachMedia(audioPlayer);
