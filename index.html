@@ -56,11 +56,11 @@
 
     <div class="container">
         <h1>Phill's Wee Radio Streamer</h1>
-        
+
         <div id="station-list"></div>
 
         <audio id="audio-player" controls></audio>
-        
+
         <div id="status">Select a station to play.</div>
     </div>
 
@@ -78,7 +78,7 @@
             { name: "Clyde 1", url: "http://www.radiofeeds.net/playlists/bauer.pls?station=clyde1-aac", icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSHe09jI2ikohDCgWJy-5BZBpdWcGfh_wdAxw&s"},
             { name: "Sky News Radio", url: "http://video.news.sky.com/snr/news/snrnews.mp3", icon: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzAwNDJFRCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjNlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjYwIiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiPlNLWTwvdGV4dD48L3N2Zz4="},
             { name: "GB News Radio", url: "https://listen-gbnews.sharp-stream.com/gbnews.mp3", icon: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI0ZGMDAwMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjNlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjQ4IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiPkdCPC90ZXh0Pjwvc3ZnPg=="},
-            { name: "NPR News", url: "https://npr-ice.streamguys1.com/live.mp3", icon: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzAwMDAwMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjNlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjU2IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIj5OUFI8L3RleHQ+PC9zdmc+"}
+            { name: "NPR News", url: "https://npr-ice.streamguys1.com/live.mp3", icon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23228CCC'/%3E%3Ctext x='50%25' y='50%25' dy='.3em' text-anchor='middle' font-family='Arial, sans-serif' font-size='60' font-weight='bold' fill='white'%3ENPR%3C/text%3E%3C/svg%3E"}
         ];
 
         async function playStream(station) {
@@ -114,7 +114,7 @@
         }
 
         function initializePlayer() {
-            stationListEl.innerHTML = ''; 
+            stationListEl.innerHTML = '';
             let lastPlayedStation = null;
 
             try {
@@ -128,7 +128,7 @@
                 const resumeButton = document.createElement('button');
                 resumeButton.className = 'station-button';
                 resumeButton.id = 'resume-button';
-                
+
                 const icon = document.createElement('img');
                 icon.className = 'station-icon';
                 if (lastPlayedStation.icon) { icon.src = lastPlayedStation.icon; }
@@ -145,7 +145,7 @@
             defaultStations.forEach(station => {
                 const button = document.createElement('button');
                 button.className = 'station-button';
-                
+
                 const icon = document.createElement('img');
                 icon.className = 'station-icon';
                 icon.src = station.icon;
